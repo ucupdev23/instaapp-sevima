@@ -22,7 +22,7 @@ Aplikasi berbagi foto sederhana mirip Instagram, dibuat dengan PHP Native dan My
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/USERNAME/instaapp-sevima.git
+git clone https://github.com/ucupdev23/instaapp-sevima.git
 ```
 
 ### 2. Setup Database
