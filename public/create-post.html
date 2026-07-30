@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaApp - Buat Post</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <div class="container">
+        <div class="create-post">
+            <h2 class="create-post__title">📸 Buat Post Baru</h2>
+
+            <div id="alert" class="alert"></div>
+
+            <form id="createPostForm">
+                <!-- Upload Gambar -->
+                <div class="image-upload" id="imageUpload">
+                    <div class="image-upload__icon">📷</div>
+                    <p class="image-upload__text">Klik atau drag gambar ke sini</p>
+                    <input type="file" id="imageInput" accept="image/jpeg,image/png,image/gif,image/webp" required>
+                </div>
+
+                <img id="imagePreview" class="image-preview" alt="Preview">
+
+                <!-- Caption -->
+                <div class="form-group">
+                    <label for="caption">Caption</label>
+                    <textarea id="caption" class="form-input" placeholder="Tulis caption..." rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="postBtn">Bagikan Post</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function init() {
+            currentUser = await checkAuth();
+            if (!currentUser) return;
+            document.getElementById('navbar').innerHTML = createNavbar(currentUser.username, currentUser.id);
+        }
+
+        // Preview gambar sebelum upload
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const preview = document.getElementById('imagePreview');
+            const uploadArea = document.getElementById('imageUpload');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                uploadArea.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Submit post
+        document.getElementById('createPostForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('imageInput');
+            if (!fileInput.files[0]) {
+                showAlert('Pilih gambar terlebih dahulu', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('postBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Mengupload...';
+
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            formData.append('caption', document.getElementById('caption').value);
+
+            try {
+                const res = await api.createPost(formData);
+
+                if (res.error) {
+                    showAlert(res.error, 'error');
+                } else {
+                    showAlert('Post berhasil dibuat!', 'success');
+                    setTimeout(() => window.location.href = 'feed.html', 1000);
+                }
+            } catch (err) {
+                showAlert('Gagal mengupload, coba lagi', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Bagikan Post';
+        });
+
+        init();
+    </script>
+</body>
+</html>
