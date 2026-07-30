@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaApp - Feed</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <div class="container">
+        <div id="feed"></div>
+        <div id="empty" class="empty-state" style="display:none;">
+            <div class="empty-state__icon">📷</div>
+            <p class="empty-state__text">Belum ada postingan. <a href="create-post.html">Buat post pertamamu!</a></p>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        let currentUser = null;
+
+        // Inisialisasi halaman
+        async function init() {
+            currentUser = await checkAuth();
+            if (!currentUser) return;
+
+            document.getElementById('navbar').innerHTML = createNavbar(currentUser.username, currentUser.id);
+            loadFeed();
+        }
+
+        // Load semua post
+        async function loadFeed() {
+            const res = await api.getPosts();
+            const feed = document.getElementById('feed');
+            const empty = document.getElementById('empty');
+
+            if (!res.posts || res.posts.length === 0) {
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            feed.innerHTML = res.posts.map(post => createPostCard(post)).join('');
+        }
+
+        // Buat HTML untuk satu post card
+        function createPostCard(post) {
+            const isOwner = currentUser && currentUser.id == post.user_id;
+            const likeIcon = post.is_liked ? '❤️' : '🤍';
+            const likedClass = post.is_liked ? 'post-card__action-btn--liked' : '';
+
+            return `
+            <div class="post-card" id="post-${post.id}">
+                <div class="post-card__header">
+                    <img src="${post.avatar && post.avatar !== 'default-avatar.png' 
+                        ? '/instaapp-sevima/public/uploads/' + post.avatar 
+                        : 'https://ui-avatars.com/api/?name=' + post.username + '&background=E1306C&color=fff&size=36'}" 
+                        class="post-card__avatar" alt="${post.username}">
+                    <div>
+                        <a href="profile.html?id=${post.user_id}" class="post-card__username">${post.username}</a>
+                        <div class="post-card__time">${timeAgo(post.created_at)}</div>
+                    </div>
+                    ${isOwner ? `<button class="post-card__delete" onclick="deletePost(${post.id})" title="Hapus post">🗑️</button>` : ''}
+                </div>
+
+                <img src="${post.image_url}" class="post-card__image" alt="Post by ${post.username}">
+
+                <div class="post-card__actions">
+                    <button class="post-card__action-btn ${likedClass}" onclick="toggleLike(${post.id}, this)" id="like-btn-${post.id}">
+                        ${likeIcon}
+                    </button>
+                    <button class="post-card__action-btn" onclick="document.getElementById('comment-input-${post.id}').focus()">
+                        💬
+                    </button>
+                </div>
+
+                <div class="post-card__likes" id="like-count-${post.id}">
+                    ${post.like_count} suka
+                </div>
+
+                <div class="post-card__caption">
+                    <strong>${post.username}</strong> ${post.caption || ''}
+                </div>
+
+                <div class="post-card__comments" id="comments-${post.id}">
+                    <p style="color: var(--text-light); font-size: 0.85rem; cursor: pointer;" 
+                       onclick="loadComments(${post.id})">
+                        ${post.comment_count > 0 ? `Lihat ${post.comment_count} komentar` : ''}
+                    </p>
+                </div>
+
+                <form class="comment-form" onsubmit="addComment(event, ${post.id})">
+                    <input type="text" id="comment-input-${post.id}" placeholder="Tambah komentar..." required>
+                    <button type="submit">Kirim</button>
+                </form>
+            </div>`;
+        }
+
+        // Toggle like
+        async function toggleLike(postId, btn) {
+            const res = await api.toggleLike(postId);
+            if (res.error) return;
+
+            btn.innerHTML = res.liked ? '❤️' : '🤍';
+            btn.className = 'post-card__action-btn' + (res.liked ? ' post-card__action-btn--liked' : '');
+            document.getElementById(`like-count-${postId}`).textContent = `${res.like_count} suka`;
+        }
+
+        // Load komentar
+        async function loadComments(postId) {
+            const res = await api.getComments(postId);
+            const container = document.getElementById(`comments-${postId}`);
+
+            if (!res.comments || res.comments.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-light); font-size: 0.85rem;">Belum ada komentar</p>';
+                return;
+            }
+
+            container.innerHTML = res.comments.map(c => {
+                const canDelete = currentUser && currentUser.id == c.user_id;
+                return `
+                <div class="comment">
+                    <span class="comment__username">${c.username}</span>
+                    <span class="comment__text">${c.content}</span>
+                    ${canDelete ? `<button class="comment__delete" onclick="deleteComment(${c.id}, ${postId})">✕</button>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        // Tambah komentar
+        async function addComment(e, postId) {
+            e.preventDefault();
+            const input = document.getElementById(`comment-input-${postId}`);
+            const content = input.value.trim();
+            if (!content) return;
+
+            const res = await api.addComment(postId, content);
+            if (res.error) return;
+
+            input.value = '';
+            loadComments(postId);
+
+            // Update comment count (reload feed sederhana)
+            const countEl = document.getElementById(`comments-${postId}`);
+            if (countEl) loadComments(postId);
+        }
+
+        // Hapus komentar
+        async function deleteComment(commentId, postId) {
+            if (!confirm('Hapus komentar ini?')) return;
+            const res = await api.deleteComment(commentId);
+            if (!res.error) loadComments(postId);
+        }
+
+        // Hapus post
+        async function deletePost(postId) {
+            if (!confirm('Yakin ingin menghapus post ini?')) return;
+            const res = await api.deletePost(postId);
+            if (!res.error) {
+                document.getElementById(`post-${postId}`).remove();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
