@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaApp - Daftar</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <h1 class="auth-box__logo">InstaApp</h1>
+            <p class="auth-box__subtitle">Daftar untuk melihat foto dan video dari teman-temanmu</p>
+
+            <div id="alert" class="alert"></div>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" class="form-input" placeholder="Masukkan username" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" class="form-input" placeholder="Masukkan email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Minimal 6 karakter" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Konfirmasi Password</label>
+                    <input type="password" id="confirmPassword" class="form-input" placeholder="Ulangi password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="registerBtn">Daftar</button>
+            </form>
+
+            <div class="auth-box__divider">ATAU</div>
+
+            <p>Sudah punya akun? <a href="index.html">Masuk</a></p>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                showAlert('Password tidak cocok', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('registerBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Memproses...';
+
+            try {
+                const res = await api.register(
+                    document.getElementById('username').value,
+                    document.getElementById('email').value,
+                    password
+                );
+
+                if (res.error) {
+                    showAlert(res.error, 'error');
+                } else {
+                    showAlert('Registrasi berhasil! Mengalihkan ke login...', 'success');
+                    setTimeout(() => window.location.href = 'index.html', 1200);
+                }
+            } catch (err) {
+                showAlert('Terjadi kesalahan, coba lagi', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Daftar';
+        });
+    </script>
+</body>
+</html>
