@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaApp - Profil</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <div class="container">
+        <div id="profileHeader" class="profile-header" style="display:none;"></div>
+        <div id="postGrid" class="post-grid"></div>
+        <div id="empty" class="empty-state" style="display:none;">
+            <div class="empty-state__icon">📷</div>
+            <p class="empty-state__text">Belum ada postingan</p>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function init() {
+            currentUser = await checkAuth();
+            if (!currentUser) return;
+
+            document.getElementById('navbar').innerHTML = createNavbar(currentUser.username, currentUser.id);
+
+            // Ambil user ID dari URL parameter
+            const params = new URLSearchParams(window.location.search);
+            const profileId = params.get('id') || currentUser.id;
+
+            loadProfile(profileId);
+        }
+
+        async function loadProfile(userId) {
+            // Ambil data user
+            const userRes = await api.getUser(userId);
+            if (userRes.error) {
+                document.getElementById('profileHeader').innerHTML = '<p>User tidak ditemukan</p>';
+                document.getElementById('profileHeader').style.display = 'block';
+                return;
+            }
+
+            const user = userRes.user;
+            const isOwnProfile = currentUser && currentUser.id == userId;
+
+            // Render profile header
+            const header = document.getElementById('profileHeader');
+            header.style.display = 'flex';
+            header.innerHTML = `
+                <img src="${user.avatar && user.avatar !== 'default-avatar.png' 
+                    ? '/instaapp-sevima/public/uploads/' + user.avatar 
+                    : 'https://ui-avatars.com/api/?name=' + user.username + '&background=E1306C&color=fff&size=100'}" 
+                    class="profile-header__avatar" alt="${user.username}">
+                <div class="profile-header__info">
+                    <h2>${user.username}</h2>
+                    <div class="profile-header__stats">
+                        <span><strong>${user.post_count || 0}</strong> postingan</span>
+                    </div>
+                    <p class="profile-header__bio">${user.bio || 'Belum ada bio'}</p>
+                    <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 6px;">
+                        Bergabung ${new Date(user.created_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                    </p>
+                </div>
+            `;
+
+            // Ambil post milik user
+            const postsRes = await api.getUserPosts(userId);
+            const grid = document.getElementById('postGrid');
+            const empty = document.getElementById('empty');
+
+            if (!postsRes.posts || postsRes.posts.length === 0) {
+                empty.style.display = 'block';
+                return;
+            }
+
+            grid.innerHTML = postsRes.posts.map(post => `
+                <div class="post-grid__item" onclick="window.location.href='feed.html'">
+                    <img src="${post.image_url}" alt="Post" loading="lazy">
+                </div>
+            `).join('');
+        }
+
+        init();
+    </script>
+</body>
+</html>
