@@ -158,6 +158,20 @@ function createNavbar(username, userId) {
 
 // Handle logout
 async function handleLogout() {
+    if (!confirm('Yakin ingin keluar?')) return;
     await api.logout();
     window.location.href = 'index.html';
 }
+
+// Navbar shadow saat scroll
+window.addEventListener('scroll', function() {
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        if (window.scrollY > 10) {
+            navbar.classList.add('navbar--scrolled');
+        } else {
+            navbar.classList.remove('navbar--scrolled');
+        }
+    }
+});
+

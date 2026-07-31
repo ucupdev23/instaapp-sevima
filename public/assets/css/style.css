@@ -665,3 +665,62 @@ textarea.form-input {
         padding: 6px 8px;
     }
 }
+
+/* --- Animations & Polish --- */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes likeAnimation {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.3); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+.post-card {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.post-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.3s ease;
+}
+
+.post-card__action-btn--liked {
+    animation: likeAnimation 0.4s ease;
+}
+
+.auth-box {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.create-post {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.profile-header {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+/* Smooth image load */
+.post-card__image {
+    background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+    transition: opacity 0.3s ease;
+}
+
+/* Navbar shadow saat scroll */
+.navbar {
+    transition: box-shadow 0.3s ease;
+}
+
+.navbar--scrolled {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
