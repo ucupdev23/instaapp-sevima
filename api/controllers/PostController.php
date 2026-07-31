@@ -53,7 +53,7 @@ class PostController {
         }
 
         $file = $_FILES['image'];
-        $caption = $_POST['caption'] ?? '';
+        $caption = htmlspecialchars(trim($_POST['caption'] ?? ''), ENT_QUOTES, 'UTF-8');
 
         // Validasi tipe file
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];

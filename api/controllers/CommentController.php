@@ -26,7 +26,8 @@ class CommentController {
             return;
         }
 
-        $commentId = $this->comment->create($postId, $userId, $data['content']);
+        $content = htmlspecialchars(trim($data['content']), ENT_QUOTES, 'UTF-8');
+        $commentId = $this->comment->create($postId, $userId, $content);
 
         http_response_code(201);
         echo json_encode([
