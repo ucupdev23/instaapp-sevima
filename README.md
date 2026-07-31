@@ -84,6 +84,7 @@ instaapp-sevima/
 | DELETE | `/api/comments/{id}` | Hapus komentar (owner only) | ✅ |
 | GET | `/api/users/{id}` | Data profil user | ❌ |
 
-## Screenshot
+## Demo Video
 
-> Screenshot/demo video akan ditambahkan.
+🎥 **Video Demo Aplikasi**: [Tonton Demo InstaApp di YouTube](https://youtu.be/689YzY4v4kQ)
+
